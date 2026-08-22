@@ -27,6 +27,16 @@ Open the generated directory in the target agent and send the exact contents of 
 
 The automated runner creates a fresh fixture and ephemeral Codex session for every condition, installs No Surprises only inside treatment fixtures and captures the JSONL trace, final response and code diff.
 
+Install the Codex CLI first if `codex --version` does not work:
+
+```bash
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+codex login
+codex --version
+```
+
+Sign in with the ChatGPT account whose Codex usage you want the evaluation to consume.
+
 Preview the 28-run plan:
 
 ```bash

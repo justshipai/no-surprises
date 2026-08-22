@@ -23,6 +23,32 @@ node evals/prepare-fixture.mjs auth-existing-provider /tmp/no-surprises-auth-bas
 
 Open the generated directory in the target agent and send the exact contents of `PROMPT.md`. In the skill condition, install or explicitly invoke No Surprises before sending the same prompt.
 
+## Run the Codex matrix
+
+The automated runner creates a fresh fixture and ephemeral Codex session for every condition, installs No Surprises only inside treatment fixtures and captures the JSONL trace, final response and code diff.
+
+Preview the 28-run plan:
+
+```bash
+node evals/run-codex.mjs --dry-run
+```
+
+Run it with your current Codex model:
+
+```bash
+node evals/run-codex.mjs
+```
+
+Or pin a model for reproducibility:
+
+```bash
+node evals/run-codex.mjs --model <model-name>
+```
+
+Use `--case <case-id>` or `--condition baseline|skill` for a smaller run. Existing results are never overwritten unless `--force` is supplied.
+
+The runner refuses to create baseline results if it finds No Surprises in the official user-level Codex skills directory. This prevents an installed copy from contaminating the control condition. It also ignores user configuration and rules, while keeping the exact user prompt identical across each baseline/treatment pair.
+
 ## Record a run
 
 Generate a complete results file:

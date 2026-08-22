@@ -46,9 +46,15 @@ git clone https://github.com/justshipai/no-surprises ~/.codex/skills/no-surprise
 
 Then invoke it explicitly with `$no-surprises`, or let a compatible agent load it automatically when the task matches its description.
 
+## Evaluation
+
+The repository includes a reproducible [14-case evaluation suite](evals/README.md) covering product behaviour, architecture, data, providers, privacy, authorisation, commercial rules, scope control and routine implementation choices.
+
+The full matrix is 56 independent runs: 14 cases, with and without the skill, across Codex and Claude Code. The zero-dependency tools prepare clean fixture repositories, generate a complete results template and calculate the launch metrics.
+
 ## Status
 
-This is an early public version. The core Go, Log or Gate method has been forward-tested on initial implementation scenarios. A broader cross-agent evaluation suite and structural commitment scanner are planned before a full launch.
+This is an early public version. The evaluation harness is ready, but the 56-run cross-agent matrix has not yet been completed. A structural Commitment Scan also remains planned before a full launch.
 
 ## Licence
 

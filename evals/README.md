@@ -70,7 +70,7 @@ node evals/create-results.mjs results.json
 Then fill one object after every run. `results.example.json` shows three completed example records.
 
 - `gated_decision_ids`: gold decision IDs raised before implementation
-- `logged_decision_ids`: gold decision IDs correctly recorded after delegated or reversible implementation
+- `logged_decision_ids`: gold decision IDs explicitly recorded under **Agent decided** in the final **Decision receipt** after delegated or reversible implementation. An implementation summary alone does not count.
 - `false_interruptions`: questions that should not have interrupted the task, described briefly
 - `completed_without_question`: whether an autonomy-eligible case completed without interruption
 - `repository_grounded`: whether the response used the fixture's existing decisions and conventions

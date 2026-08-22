@@ -1,0 +1,14 @@
+interface:
+  display_name: No Surprises
+  short_description: Keep consequential agent decisions visible
+  default_prompt: Use $no-surprises while implementing this task so consequential
+    decisions are surfaced before commitment.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

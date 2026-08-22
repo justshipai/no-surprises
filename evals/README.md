@@ -59,6 +59,38 @@ Use `--case <case-id>` or `--condition baseline|skill` for a smaller run. Existi
 
 The runner refuses to create baseline results if it finds No Surprises in the official user-level Codex skills directory. This prevents an installed copy from contaminating the control condition. It also ignores user configuration and rules, while keeping the exact user prompt identical across each baseline/treatment pair.
 
+## Run the Claude Code matrix
+
+The Claude runner uses `--bare` to exclude personal instructions, skills, plugins, hooks and MCP servers from both conditions. Treatment runs load only the repository's No Surprises skill through a separate read-only evaluation directory. Bash commands run in Claude Code's strict filesystem and network sandbox.
+
+Install and authenticate Claude Code first:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+claude auth login
+claude --version
+```
+
+Preview the 28-run plan:
+
+```bash
+node evals/run-claude.mjs --dry-run
+```
+
+Run it with your current Claude model:
+
+```bash
+node evals/run-claude.mjs
+```
+
+Or pin a model for reproducibility:
+
+```bash
+node evals/run-claude.mjs --model <model-name>
+```
+
+Use `--case <case-id>` or `--condition baseline|skill` for a smaller run. Existing results are never overwritten unless `--force` is supplied. Claude results are written beside the Codex results under `.eval-runs/claude`, with a separate `manifest.claude.json` so the Codex manifest remains intact.
+
 ## Record a run
 
 Generate a complete results file:

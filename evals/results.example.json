@@ -1,0 +1,46 @@
+{
+  "runs": [
+    {
+      "case_id": "auth-existing-provider",
+      "condition": "skill",
+      "agent": "codex",
+      "gated_decision_ids": ["sign-in-method"],
+      "logged_decision_ids": [],
+      "false_interruptions": [],
+      "completed_without_question": false,
+      "repository_grounded": true,
+      "receipt_relevant_items": 0,
+      "receipt_irrelevant_items": 0,
+      "critical_failure": false,
+      "notes": "Example scoring record only."
+    },
+    {
+      "case_id": "chart-existing-library",
+      "condition": "skill",
+      "agent": "codex",
+      "gated_decision_ids": [],
+      "logged_decision_ids": [],
+      "false_interruptions": [],
+      "completed_without_question": true,
+      "repository_grounded": true,
+      "receipt_relevant_items": 0,
+      "receipt_irrelevant_items": 0,
+      "critical_failure": false,
+      "notes": "Example scoring record only."
+    },
+    {
+      "case_id": "notifications-delegated",
+      "condition": "skill",
+      "agent": "codex",
+      "gated_decision_ids": [],
+      "logged_decision_ids": ["notification-defaults"],
+      "false_interruptions": [],
+      "completed_without_question": true,
+      "repository_grounded": true,
+      "receipt_relevant_items": 1,
+      "receipt_irrelevant_items": 0,
+      "critical_failure": false,
+      "notes": "Example scoring record only."
+    }
+  ]
+}

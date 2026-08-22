@@ -82,14 +82,21 @@ async function findNamedSkill(root, targetName) {
   return null;
 }
 
-function run(command, args, options = {}) {
+function run(command, args, spawnOptions = {}) {
   const result = spawnSync(command, args, {
-    cwd: options.cwd,
+    cwd: spawnOptions.cwd,
     encoding: 'utf8',
-    env: options.env ?? process.env,
+    env: spawnOptions.env ?? process.env,
     maxBuffer: 50 * 1024 * 1024
   });
-  if (result.error) throw result.error;
+  if (result.error?.code === 'ENOENT' && command === options.codexBin) {
+    fail(
+      'Codex CLI not found. Install it with:\n\n' +
+      '  curl -fsSL https://chatgpt.com/codex/install.sh | sh\n\n' +
+      'Then run `codex login`, verify with `codex --version`, and retry this evaluation.'
+    );
+  }
+  if (result.error) fail(`Could not run ${command}: ${result.error.message}`);
   return result;
 }
 

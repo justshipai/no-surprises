@@ -124,6 +124,8 @@ Do not implement adjacent improvements merely because they appear useful. Procee
 
 At completion, add a short **Decision receipt** only when meaningful decisions, assumptions, or deferrals occurred. Use only relevant categories:
 
+If any choice was classified Log, include it explicitly under **Agent decided:** in the **Decision receipt**. Do not rely on the general implementation summary to record it.
+
 - **Confirmed:** Decisions explicitly made by the user
 - **Agent decided:** Consequential choices made within delegated authority
 - **Assumed:** Material assumptions that remain unverified
@@ -153,6 +155,7 @@ Before completing the task, verify:
 - Did each Gate happen before commitment?
 - Did every Gate contain a recommendation?
 - Was delegated authority respected?
+- Did every Log appear explicitly in the Decision receipt?
 - Were routine choices omitted from the receipt?
 - Did the skill preserve useful autonomy?
 

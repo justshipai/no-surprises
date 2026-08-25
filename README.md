@@ -1,6 +1,6 @@
 # No Surprises
 
-**Keep AI coding agents autonomous without letting them quietly make decisions you should own.**
+**Stop AI agents making decisions behind your back.**
 
 No Surprises is a behavioural skill for substantial coding work. It helps an agent distinguish routine implementation choices from consequential commitments about product behaviour, architecture, data, dependencies, external services, cost, security, privacy and scope.
 

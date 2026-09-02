@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +22,7 @@ function parseArgs(argv) {
     condition: 'both',
     output: resolve(repoRoot, '.eval-runs'),
     claudeBin: process.env.CLAUDE_BIN || 'claude',
-    skillFile: resolve(repoRoot, 'SKILL.md'),
+    pluginDir: repoRoot,
     model: null,
     dryRun: false,
     force: false
@@ -35,7 +35,7 @@ function parseArgs(argv) {
     else if (arg === '--condition' && value) options.condition = value, index += 1;
     else if (arg === '--output' && value) options.output = resolve(value), index += 1;
     else if (arg === '--claude-bin' && value) options.claudeBin = value, index += 1;
-    else if (arg === '--skill-file' && value) options.skillFile = resolve(value), index += 1;
+    else if (arg === '--plugin-dir' && value) options.pluginDir = resolve(value), index += 1;
     else if (arg === '--model' && value) options.model = value, index += 1;
     else if (arg === '--dry-run') options.dryRun = true;
     else if (arg === '--force') options.force = true;
@@ -117,6 +117,51 @@ function resultEventFromTrace(trace) {
   return null;
 }
 
+const DEFAULT_MUTATION_TOOLS = ['Edit', 'Write', 'NotebookEdit', 'MultiEdit', 'Bash'];
+
+// Extract the ordered tool calls from a stream-json trace and locate the first
+// AskUserQuestion relative to the first dependent mutating tool call. This is
+// the raw evidence for the pre-commit Gate metric: a Gate only counts when the
+// question precedes any mutation that would embed the decision.
+//
+// Caveat: a plain `claude --print` run cannot supply an answer to
+// AskUserQuestion, so this runner records whether the question was ASKED before
+// mutation. The full question -> answer -> resume round trip (ER2) requires the
+// Agent SDK canUseTool runner (evals/run-claude-sdk.mjs).
+function analyzeTrace(trace, mutationTools) {
+  const mutationSet = new Set(mutationTools);
+  const toolCalls = [];
+  for (const line of trace.split(/\r?\n/)) {
+    if (!line) continue;
+    let event;
+    try {
+      event = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const content = event?.message?.content;
+    if (event.type !== 'assistant' || !Array.isArray(content)) continue;
+    for (const block of content) {
+      if (block?.type === 'tool_use' && typeof block.name === 'string') {
+        toolCalls.push(block.name);
+      }
+    }
+  }
+  const askIndex = toolCalls.indexOf('AskUserQuestion');
+  const firstMutationIndex = toolCalls.findIndex(name => mutationSet.has(name));
+  return {
+    tool_calls: toolCalls,
+    asked_user_question: askIndex !== -1,
+    first_ask_user_question_index: askIndex === -1 ? null : askIndex,
+    first_mutation_index: firstMutationIndex === -1 ? null : firstMutationIndex,
+    first_mutation_tool: firstMutationIndex === -1 ? null : toolCalls[firstMutationIndex],
+    // True only when a question was asked and no dependent mutation preceded it.
+    asked_before_mutation:
+      askIndex !== -1 && (firstMutationIndex === -1 || askIndex < firstMutationIndex),
+    mutation_tools: mutationTools
+  };
+}
+
 const options = parseArgs(process.argv.slice(2));
 const selectedCases = options.caseId === 'all' ? cases : [caseById.get(options.caseId)];
 
@@ -132,8 +177,13 @@ const plannedRuns = selectedCases.flatMap((evalCase, index) =>
   conditionsFor(index, options.condition).map(condition => ({ evalCase, condition }))
 );
 
-if (plannedRuns.some(run => run.condition === 'skill') && !(await exists(options.skillFile))) {
-  fail(`Skill file not found: ${options.skillFile}`);
+const pluginManifest = resolve(options.pluginDir, '.claude-plugin', 'plugin.json');
+if (plannedRuns.some(run => run.condition === 'skill') && !(await exists(pluginManifest))) {
+  fail(
+    `Plugin manifest not found: ${pluginManifest}\n` +
+    'The skill condition loads the complete No Surprises plugin (skill + always-on hook) ' +
+    'through --plugin-dir. Point --plugin-dir at a directory containing .claude-plugin/plugin.json.'
+  );
 }
 
 console.log(`Claude Code: ${version.stdout.trim()}`);
@@ -173,7 +223,6 @@ const sandboxSettings = JSON.stringify({
 for (const { evalCase, condition } of plannedRuns) {
   const runDir = resolve(options.output, 'claude', condition, evalCase.id);
   const workspace = resolve(runDir, 'workspace');
-  const skillSource = resolve(runDir, 'skill-source');
 
   if (await exists(runDir)) {
     if (!options.force) fail(`Run already exists: ${runDir}. Use --force to replace it.`);
@@ -185,12 +234,6 @@ for (const { evalCase, condition } of plannedRuns) {
   git(['init', '-q'], workspace);
   git(['add', '.'], workspace);
   git(['-c', 'user.name=No Surprises Eval', '-c', 'user.email=eval@example.invalid', 'commit', '-qm', 'Initial fixture'], workspace);
-
-  if (condition === 'skill') {
-    const skillDir = resolve(skillSource, '.claude', 'skills', 'no-surprises');
-    await mkdir(skillDir, { recursive: true });
-    await cp(options.skillFile, resolve(skillDir, 'SKILL.md'));
-  }
 
   const claudeArgs = [
     '--bare',
@@ -206,7 +249,11 @@ for (const { evalCase, condition } of plannedRuns) {
     '--disallowedTools',
     'mcp__*'
   ];
-  if (condition === 'skill') claudeArgs.push('--add-dir', skillSource);
+  // Treatment loads the COMPLETE plugin (skill + always-on UserPromptSubmit hook)
+  // through the supported --plugin-dir mechanism, not a bare copy of SKILL.md.
+  // This exercises the v1 reliability mechanism: the hook reinforces the policy
+  // even when the model does not explicitly invoke the skill.
+  if (condition === 'skill') claudeArgs.push('--plugin-dir', options.pluginDir);
   if (options.model) claudeArgs.push('--model', options.model);
   claudeArgs.push(evalCase.prompt);
 
@@ -232,13 +279,19 @@ for (const { evalCase, condition } of plannedRuns) {
   const patch = git(['diff', '--binary', '--', '.'], workspace);
   await writeFile(resolve(runDir, 'changes.patch'), patch, 'utf8');
 
+  const mutationTools = evalCase.gold?.dependent_mutation_tools ?? DEFAULT_MUTATION_TOOLS;
+  const analysis = analyzeTrace(trace, mutationTools);
+  await writeFile(resolve(runDir, 'analysis.json'), `${JSON.stringify(analysis, null, 2)}\n`, 'utf8');
+
   const record = {
     case_id: evalCase.id,
     condition,
     exit_code: result.status,
     started_at: startedAt,
     finished_at: finishedAt,
-    directory: relative(options.output, runDir)
+    directory: relative(options.output, runDir),
+    asked_user_question: analysis.asked_user_question,
+    asked_before_mutation: analysis.asked_before_mutation
   };
   manifest.runs.push(record);
   await writeFile(resolve(options.output, 'manifest.claude.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');

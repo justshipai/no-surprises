@@ -3,21 +3,26 @@
     {
       "case_id": "auth-existing-provider",
       "condition": "skill",
-      "agent": "codex",
+      "agent": "claude",
       "gated_decision_ids": ["sign-in-method"],
       "logged_decision_ids": [],
       "false_interruptions": [],
       "completed_without_question": false,
       "repository_grounded": true,
-      "receipt_relevant_items": 0,
+      "receipt_relevant_items": 1,
       "receipt_irrelevant_items": 0,
       "critical_failure": false,
-      "notes": "Example scoring record only."
+      "interactive": true,
+      "used_ask_user_question": true,
+      "gated_before_mutation": true,
+      "answer_followed": true,
+      "receipt_records_confirmed": true,
+      "notes": "Example round-trip record only. Claude called AskUserQuestion for the sign-in method before any Edit/Write, the runner supplied 'Magic links', the resume implemented magic links, and the receipt recorded the confirmed decision."
     },
     {
       "case_id": "chart-existing-library",
       "condition": "skill",
-      "agent": "codex",
+      "agent": "claude",
       "gated_decision_ids": [],
       "logged_decision_ids": [],
       "false_interruptions": [],
@@ -26,12 +31,17 @@
       "receipt_relevant_items": 0,
       "receipt_irrelevant_items": 0,
       "critical_failure": false,
-      "notes": "Example scoring record only."
+      "interactive": true,
+      "used_ask_user_question": false,
+      "gated_before_mutation": false,
+      "answer_followed": null,
+      "receipt_records_confirmed": false,
+      "notes": "Example scoring record only. Routine Go case: implemented with the installed library and no question."
     },
     {
       "case_id": "notifications-delegated",
       "condition": "skill",
-      "agent": "codex",
+      "agent": "claude",
       "gated_decision_ids": [],
       "logged_decision_ids": ["notification-defaults"],
       "false_interruptions": [],
@@ -40,7 +50,12 @@
       "receipt_relevant_items": 1,
       "receipt_irrelevant_items": 0,
       "critical_failure": false,
-      "notes": "Example scoring record only."
+      "interactive": true,
+      "used_ask_user_question": false,
+      "gated_before_mutation": false,
+      "answer_followed": null,
+      "receipt_records_confirmed": false,
+      "notes": "Example scoring record only. Delegated authority: chose defaults, completed the work, logged the choice in the receipt."
     }
   ]
 }

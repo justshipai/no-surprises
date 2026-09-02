@@ -29,6 +29,15 @@ for (const agent of ['codex', 'claude']) {
         receipt_relevant_items: 0,
         receipt_irrelevant_items: 0,
         critical_failure: false,
+        // Gate round-trip fields (v0.2). `interactive` is true only for runs
+        // whose runner can answer AskUserQuestion (the SDK canUseTool runner);
+        // leave it false for plain CLI runs. `answer_followed` stays null until
+        // an answer was actually supplied and the resume observed.
+        interactive: false,
+        used_ask_user_question: false,
+        gated_before_mutation: false,
+        answer_followed: null,
+        receipt_records_confirmed: false,
         notes: ''
       });
     }

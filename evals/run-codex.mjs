@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+// LEGACY / EXPERIMENTAL — outside the supported v1 surface.
+// v1 targets Claude Code only. This Codex runner is retained for comparison and
+// future work; the No Surprises v1 plugin does not support Codex.
+
 import { spawnSync } from 'node:child_process';
 import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';

@@ -1,3 +1,7 @@
+# LEGACY / EXPERIMENTAL — outside the supported v1 surface.
+# v1 targets Claude Code only (see the repository README). This OpenAI/Codex
+# adapter is retained for reference and future work; it is not part of the
+# No Surprises v1 product and is not maintained against current Codex behaviour.
 interface:
   display_name: No Surprises
   short_description: Keep consequential agent decisions visible

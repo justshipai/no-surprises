@@ -1,6 +1,6 @@
 ---
 name: no-surprises
-description: Preserve user decision rights during substantial coding work. Use when implementing features, refactoring systems, or changing a codebase where the request leaves unstated choices about product behaviour, architecture, data, dependencies, external services, cost, security, privacy, scope, or irreversible actions. Also use when the user asks the agent not to make assumptions, to ask before important decisions, to use its judgement, or to avoid surprises. Do not use for factual questions, review-only tasks, trivial edits, or routine local fixes.
+description: Preserve the user's decision rights during substantial Claude Code implementation and refactoring. Use when implementing features or changing a codebase and the request leaves a consequential unstated choice about product behaviour, architecture, data, dependencies, external services, cost, security, privacy, authorisation, scope, or an irreversible action: pause and call AskUserQuestion before any dependent implementation. Also use when the user asks the agent not to make assumptions, to ask before important decisions, to use its judgement, or to avoid surprises. Do not use for factual questions, review-only tasks, trivial edits, or routine local fixes.
 ---
 
 # No Surprises
@@ -41,6 +41,20 @@ Ignore ordinary implementation choices. Consider a decision meaningful when it c
 
 Judge consequences rather than technical complexity. A one-line analytics integration can be more consequential than a large internal refactor.
 
+### Product reversibility is not code reversibility
+
+A choice can be a Gate even when changing the code later would be straightforward. The commitment is about users, access, money, privacy, expectations or an external contract, not about how many lines it takes to reverse. Treat these as potentially consequential despite easy technical reversal:
+
+- Immediate versus end-of-period cancellation
+- Which users or roles can perform an action
+- Whether user data is tracked, retained, shared, or exported
+- Sign-in methods and account-recovery behaviour
+- Whether an external provider becomes part of the product
+- Public API authentication, versioning, or compatibility commitments
+- Defaults that affect billing, consent, notifications, or destructive behaviour
+
+Do not expand Gate to cosmetic choices, local function shapes, reversible internal abstractions, or routine package use consistent with the repository.
+
 ## Go, log, or gate
 
 Classify meaningful unstated decisions internally. Do not narrate the classification.
@@ -77,17 +91,24 @@ Common Gate decisions include:
 
 Do not Gate automatically merely because work involves a new package, a database migration, an ambiguous detail, several valid implementations, or a large code change.
 
-## Raise a useful decision
+## Execute a Gate
 
-Raise the decision at the last responsible moment:
+When a choice is classified Gate, the pause must happen *before* the choice is embedded, and it must use Claude Code's native `AskUserQuestion` tool so the decision reaches the user as a real question rather than prose they might skim past.
 
-1. Inspect enough context to understand the real choice.
-2. Complete safe groundwork only when it does not bias the decision.
-3. Pause before the commitment becomes embedded.
-4. Ask one concise, bounded question.
-5. Continue promptly after the user answers.
+1. Complete only inspection and safe groundwork that does not bias the decision.
+2. Before any dependent `Edit`, `Write`, `NotebookEdit`, `Bash`, migration, installation, external action, or delegated implementation, call `AskUserQuestion`.
+3. Ask one concise question. Bundle at most three, and only when they are inseparable parts of the same commitment.
+4. Put the recommended option first and label it clearly as recommended.
+5. Include no more than two credible alternatives. Rely on the free-text "Other" option rather than inventing an exhaustive list.
+6. Wait for the answer. Do not continue the dependent implementation in the same turn before the tool response arrives.
+7. Treat the answer as authority for that task, then continue promptly.
+8. Record the confirmed decision in the final **Decision receipt** if it remains material to understanding the implementation.
 
-Use this format:
+Each question should carry a short recommendation and consequence in its `description` so the user can decide without re-reading the codebase.
+
+### Fallback when AskUserQuestion is unavailable
+
+If `AskUserQuestion` is not available (for example, an interface or run mode that does not expose it), do not silently choose. End the current turn *before* any dependent implementation with this block:
 
 > **Decision needed:** State the choice plainly.
 >
@@ -97,11 +118,17 @@ Use this format:
 >
 > **Alternative:** Include no more than two credible alternatives. Omit weak alternatives.
 >
-> **Default:** State the recommendation if the user wants to delegate. Do not treat this default as permission to proceed without a response.
+> **Default:** State the recommendation if the user wants to delegate. The stated default is not permission to continue without an answer.
 
-Bundle no more than three decisions, and only when they are tightly coupled to the same commitment.
+### Gate failure modes to avoid
 
-Never ask a vague question such as "How would you like to proceed?", produce a discovery questionnaire, offer alternatives without a recommendation, ask about ordinary implementation details, or ask questions already answered by the repository.
+- Mentioning an unresolved Gate in commentary and then implementing anyway.
+- Asking after the implementation has already embedded the choice.
+- Using a generic permission confirmation as a substitute for a product decision.
+- Asking "How would you like to proceed?" without a recommendation.
+- Presenting numerous technically possible but weak alternatives.
+- Asking about a choice already established by the repository.
+- Producing a discovery questionnaire, or asking about ordinary implementation details.
 
 ## Respect delegated authority
 

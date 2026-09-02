@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "no-surprises",
+  "displayName": "No Surprises",
+  "version": "0.2.0",
+  "description": "Protects your decision rights during substantial Claude Code implementation. Reinforces the Go/Log/Gate policy on every prompt and pauses with a native AskUserQuestion before consequential product, architecture, data, authorisation, privacy, security, cost or external-provider commitments.",
+  "author": {
+    "name": "Martin Slaney",
+    "url": "https://github.com/justshipai"
+  },
+  "homepage": "https://github.com/justshipai/no-surprises",
+  "repository": "https://github.com/justshipai/no-surprises",
+  "license": "MIT",
+  "keywords": [
+    "decision-making",
+    "guardrails",
+    "product",
+    "claude-code",
+    "agent-safety"
+  ],
+  "hooks": "./hooks/hooks.json"
+}

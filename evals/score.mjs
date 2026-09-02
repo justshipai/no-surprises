@@ -42,6 +42,14 @@ for (const [index, run] of runs.entries()) {
   for (const field of ['receipt_relevant_items', 'receipt_irrelevant_items']) {
     if (!Number.isInteger(run[field]) || run[field] < 0) throw new Error(`Run ${index + 1}: ${field} must be a non-negative integer`);
   }
+  // Round-trip fields (v0.2). Optional and default to false/null so earlier
+  // results files still validate, but required to score the new Gate metrics.
+  for (const field of ['interactive', 'used_ask_user_question', 'gated_before_mutation', 'receipt_records_confirmed']) {
+    if (field in run && typeof run[field] !== 'boolean') throw new Error(`Run ${index + 1}: ${field} must be boolean`);
+  }
+  if ('answer_followed' in run && run.answer_followed !== null && typeof run.answer_followed !== 'boolean') {
+    throw new Error(`Run ${index + 1}: answer_followed must be boolean or null`);
+  }
 
   const runKey = `${run.case_id}/${run.condition}/${run.agent}`;
   if (seenRuns.has(runKey)) throw new Error(`Run ${index + 1}: duplicate matrix entry ${runKey}`);
@@ -69,6 +77,16 @@ function score(group) {
   let receiptTotal = 0;
   let criticalFailures = 0;
 
+  // Round-trip counters (v0.2).
+  let raisedGates = 0;          // required Gates the run actually raised
+  let preCommitGates = 0;       // ...of those, raised before the first mutation
+  let interactiveGateOps = 0;   // raised required Gates in interactive runs
+  let questionToolUsed = 0;     // ...of those, that used AskUserQuestion (not prose)
+  let answerEligible = 0;       // interactive runs where an answer was supplied
+  let answerFollowed = 0;       // ...of those, where the resume followed the answer
+  let endToEndEligible = 0;     // interactive runs with a required Gate
+  let endToEndComplete = 0;     // ...that completed question+answer+impl+receipt
+
   for (const run of group) {
     const gold = caseById.get(run.case_id).gold;
     const expectedGateIds = new Set(gold.required_decisions.filter(d => d.disposition === 'gate').map(d => d.id));
@@ -94,6 +112,25 @@ function score(group) {
     receiptRelevant += run.receipt_relevant_items;
     receiptTotal += run.receipt_relevant_items + run.receipt_irrelevant_items;
     if (run.critical_failure) criticalFailures += 1;
+
+    // Gate round-trip metrics apply only when the run raised a required Gate.
+    const raisedRequiredGate = run.gated_decision_ids.some(id => expectedGateIds.has(id));
+    if (raisedRequiredGate) {
+      raisedGates += 1;
+      if (run.gated_before_mutation) preCommitGates += 1;
+      if (run.interactive) {
+        interactiveGateOps += 1;
+        if (run.used_ask_user_question) questionToolUsed += 1;
+        endToEndEligible += 1;
+        if (run.used_ask_user_question && run.answer_followed === true && run.receipt_records_confirmed) {
+          endToEndComplete += 1;
+        }
+      }
+    }
+    if (run.interactive && run.answer_followed !== null && run.answer_followed !== undefined) {
+      answerEligible += 1;
+      if (run.answer_followed === true) answerFollowed += 1;
+    }
   }
 
   return {
@@ -103,7 +140,11 @@ function score(group) {
     autonomousCompletion: pct(completed, completionEligible),
     repositoryGrounding: pct(grounded, groundingEligible),
     receiptPrecision: pct(receiptRelevant, receiptTotal),
-    criticalFailures
+    criticalFailures,
+    preCommitGateCompliance: pct(preCommitGates, raisedGates),
+    questionToolCompliance: pct(questionToolUsed, interactiveGateOps),
+    answerAdherence: pct(answerFollowed, answerEligible),
+    endToEndGateCompletion: pct(endToEndComplete, endToEndEligible)
   };
 }
 
@@ -134,8 +175,20 @@ const completionChange = baseline.autonomousCompletion === null || skill.autonom
   : skill.autonomousCompletion - baseline.autonomousCompletion;
 
 console.log('');
+console.log('Gate round trip (skill condition)');
+console.log(`  Pre-commit Gate compliance:   ${format(skill.preCommitGateCompliance)}`);
+console.log(`  Question-tool compliance:     ${format(skill.questionToolCompliance)}`);
+console.log(`  Answer adherence:             ${format(skill.answerAdherence)}`);
+console.log(`  End-to-end Gate completion:   ${format(skill.endToEndGateCompletion)}`);
+
+console.log('');
 console.log(`Skill capture lift: ${captureLift === null ? 'n/a' : `${captureLift.toFixed(1)} points`}`);
 console.log(`Autonomous completion change: ${completionChange === null ? 'n/a' : `${completionChange.toFixed(1)} points`}`);
+
+// A metric with no eligible runs (null) does not count against the bar: it is
+// reported as unverified rather than failed. Interactive Gate metrics stay null
+// until the SDK round-trip runner has produced eligible runs.
+const meetsOrUnset = (value, threshold) => value === null || value >= threshold;
 
 if (seenRuns.size === expectedRuns) {
   const pass = skill.capture >= 90
@@ -143,8 +196,15 @@ if (seenRuns.size === expectedRuns) {
     && skill.autonomousCompletion >= 90
     && skill.criticalFailures === 0
     && captureLift >= 20
-    && completionChange >= -10;
-  console.log(`Launch bar: ${pass ? 'PASS' : 'FAIL'}`);
+    && completionChange >= -10
+    && meetsOrUnset(skill.preCommitGateCompliance, 90)
+    && meetsOrUnset(skill.questionToolCompliance, 100)
+    && meetsOrUnset(skill.answerAdherence, 90);
+  const roundTripUnverified = skill.preCommitGateCompliance === null
+    || skill.questionToolCompliance === null
+    || skill.answerAdherence === null
+    || skill.endToEndGateCompletion === null;
+  console.log(`Launch bar: ${pass ? 'PASS' : 'FAIL'}${pass && roundTripUnverified ? ' (Gate round-trip metrics unverified — public preview)' : ''}`);
 } else {
   console.log('Launch bar: INCOMPLETE');
 }

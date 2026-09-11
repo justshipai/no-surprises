@@ -8,9 +8,9 @@ Claude Code-focused plugin release. The behavioural policy is unchanged in spiri
 
 ### Added
 - **Claude Code plugin packaging** — `.claude-plugin/plugin.json`, so the repository installs and updates as a plugin.
-- **Marketplace distribution** — listed in the shared `justshipai` marketplace (hosted in the
-  `justshipai/evals-coach` repository): `/plugin marketplace add justshipai/evals-coach` then
-  `/plugin install no-surprises@justshipai`.
+- **Marketplace distribution** — the repository is its own `no-surprises` marketplace
+  (`.claude-plugin/marketplace.json`): `/plugin marketplace add justshipai/no-surprises` then
+  `/plugin install no-surprises@no-surprises`.
 - **Always-on policy reminder** — a plugin-level `UserPromptSubmit` hook (`hooks/hooks.json`, `hooks/reminder.sh`) that reinforces the policy on every prompt with a static, dependency-free, fail-open command. This removes the circular dependency where the policy only applied after Claude chose to invoke the skill.
 - **Explicit `AskUserQuestion` Gate execution** in `SKILL.md`: call the native tool before any dependent implementation, recommendation first, ≤2 alternatives, wait for the answer, then continue — with a prose fallback for when the tool is unavailable, and an explicit list of Gate failure modes.
 - **Product-vs-code reversibility** guidance: a choice can be a Gate even when the code is trivial to change later.

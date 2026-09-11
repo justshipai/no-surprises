@@ -2,3 +2,6 @@
 
 # Local archive of raw Codex eval runs — not for distribution
 no-surprises-codex-runs.zip
+
+# Unrelated Evals Coach artifact that sits in this working dir; never commit it
+eval-workbench.html

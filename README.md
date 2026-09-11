@@ -32,17 +32,24 @@ Claude Cowork, general claude.ai chat, Codex CLI/app, ChatGPT Work, and other Ag
 
 ## Install (recommended)
 
-Add the marketplace and install the plugin:
+No Surprises is published in the **`justshipai`** plugin marketplace (hosted in the
+[`justshipai/evals-coach`](https://github.com/justshipai/evals-coach) repository, alongside Evals Coach).
+
+Inside Claude Code — the desktop **Code tab** or a **`claude` terminal** — add the marketplace once:
 
 ```bash
-/plugin marketplace add justshipai/no-surprises
+/plugin marketplace add justshipai/evals-coach
 ```
+
+Then install the plugin:
 
 ```bash
 /plugin install no-surprises@justshipai
 ```
 
-If the install summary says `Run /reload-plugins to activate.`, run that.
+If you already use another `justshipai` plugin, the marketplace is added — skip straight to the install
+(run `/plugin marketplace update` first to pick up the latest listing). If the install summary says
+`Run /reload-plugins to activate.`, run that.
 
 ## Install for local development
 
@@ -97,7 +104,7 @@ Reusing an installed library, following established patterns, ordinary UI/naming
 
 - **Disable temporarily:** open `/plugin`, select No Surprises, and disable it. Or simply start a session without `--plugin-dir`.
 - **Uninstall:** `/plugin uninstall no-surprises@justshipai` (or remove it from the `/plugin` manager).
-- **Remove the marketplace:** `/plugin marketplace remove justshipai`.
+- **Leave the `justshipai` marketplace in place** unless you also want to remove other `justshipai` plugins (such as Evals Coach) — the marketplace is shared.
 
 Removing the plugin removes the always-on reminder; nothing else is left behind.
 
